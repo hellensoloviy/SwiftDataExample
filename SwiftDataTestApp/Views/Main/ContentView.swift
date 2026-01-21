@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 #Preview {
     ContentView()
@@ -13,14 +14,25 @@ import SwiftUI
 
 struct ContentView: View {
     
+    @Environment(\.modelContext) private var modelContext
+
     @State private var isShowingItemSheet: Bool = false
-    var expenses: [Expense] = []
+    
+    /// fetch using Query automatically
+    @Query(sort: \Expense.date) var expenses: [Expense]
     
     var body: some View {
         NavigationStack{
             List{
                 ForEach(expenses) { obj in
                     ExpenseCell(expense: obj)
+                }
+                
+                /// swipe to delete action
+                .onDelete { indexSet in
+                    for index in indexSet {
+                        modelContext.delete(expenses[index])
+                    }
                 }
             }
             .navigationTitle("Expenses")

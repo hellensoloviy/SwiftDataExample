@@ -13,6 +13,7 @@ import SwiftUI
 
 struct AddExpenseSheet: View {
     
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
     @State private var name: String = ""
@@ -37,7 +38,14 @@ struct AddExpenseSheet: View {
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button("Save") {
-                        //TODO: - save code here
+                        let expense = Expense(name: name, date: date, value: value)
+                        modelContext.insert(expense)
+                        
+                        /// there is an autosave feature, but we can additionally specify it to be sure.
+                        try? modelContext.save()
+                        
+                        /// close the sheet
+                        dismiss()
                     }
                 }
             }
