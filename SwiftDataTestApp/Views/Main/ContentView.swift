@@ -17,6 +17,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var isShowingItemSheet: Bool = false
+    @State private var expenseToEdit: Expense?
     
     /// fetch using Query automatically
     @Query(sort: \Expense.date) var expenses: [Expense]
@@ -26,6 +27,9 @@ struct ContentView: View {
             List{
                 ForEach(expenses) { obj in
                     ExpenseCell(expense: obj)
+                        .onTapGesture {
+                            expenseToEdit = obj
+                        }
                 }
                 
                 /// swipe to delete action
@@ -40,12 +44,15 @@ struct ContentView: View {
             .sheet(isPresented: $isShowingItemSheet) {
                 AddExpenseSheet()
             }
+            .sheet(item: $expenseToEdit, content: { obj in
+                /// this action happens when *$expenseToEdit* changed, and it changes when we tap on the cell
+                UpdateExpenseSheet(expense: obj)
+            })
             .toolbar {
                 if !expenses.isEmpty {
                     Button("Add expense", systemImage: "plus") {
                         isShowingItemSheet = true
                     }
-                        
                 }
             }
             .overlay {
