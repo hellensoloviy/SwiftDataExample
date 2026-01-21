@@ -22,6 +22,12 @@ struct ContentView: View {
     /// fetch using Query automatically
     @Query(sort: \Expense.date) var expenses: [Expense]
     
+    
+    /// Example of Predicate to filter the expense, not just sort.
+    @Query(filter: #Predicate<Expense> { $0.value > 1000 } , sort: \Expense.date)
+    var filteredExpenses: [Expense]
+    
+    
     var body: some View {
         NavigationStack{
             List{
