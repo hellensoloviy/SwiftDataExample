@@ -9,9 +9,42 @@ import SwiftUI
 import SwiftData
 import TipKit
 
-#Preview {
+
+@MainActor
+enum PreviewContainers {
+    static var expenses: ModelContainer {
+        let container = try! ModelContainer(
+            for: Expense.self,
+            configurations: .init(isStoredInMemoryOnly: true)
+        )
+
+        container.mainContext
+            .insert(Expense(name: "Coffee", date: .now, value: 33.5))
+        container.mainContext
+            .insert(Expense(name: "Lunch",  date: .now.addingTimeInterval(-3600), value: 1200))
+        container.mainContext
+            .insert(Expense(name: "Groceries", date: .now.addingTimeInterval(-86400), value: 450.5))
+        
+        return container
+    }
+}
+
+#Preview("Full list") {
+    ExpensesListView(viewModel: .init())
+        .modelContainer(PreviewContainers.expenses)
+        .task {
+            try? await Tips.configure ([
+                .displayFrequency(.immediate),
+                .datastoreLocation(.applicationDefault)
+            ])
+        }
+
+}
+
+#Preview("Empty") {
     ExpensesListView(viewModel: .init())
 }
+
 
 struct ExpensesListView: View {
     
@@ -34,17 +67,31 @@ struct ExpensesListView: View {
 
 
     var body: some View {
-        NavigationStack{
-            List{
-                TipView(editingTip)
-                    .tipBackground(.teal.opacity(0.2))
-                ForEach(expenses) { obj in
-                    ExpenseCell(expense: obj)
-                        .onTapGesture {
-                            expenseToEdit = obj
-                            Task { await EditingExpensesTip.editExpenseEvent.donate() }
+        NavigationStack {
+
+            
+            List {
+                Section {
+                    TipView(editingTip)
+                        .tipBackground(.teal.opacity(0.2))
+                        .listRowBackground(Color.clear)
+                    
+                        /// add resizing
+                        /// This Rectangle will take up 100% of the width
+                        /// of its nearest container (the Section/List in this case).
+                        .containerRelativeFrame(.horizontal) { length, axis in
+                            length * 1.0 // Takes 100% of the width
                         }
+
                 }
+                
+                    ForEach(expenses) { obj in
+                        ExpenseCell(expense: obj)
+                            .onTapGesture {
+                                expenseToEdit = obj
+                                Task { await EditingExpensesTip.editExpenseEvent.donate() }
+                            }
+                    }
                 
                 /// swipe to delete action
                 .onDelete { indexSet in
@@ -53,6 +100,8 @@ struct ExpensesListView: View {
                     }
                 }
             }
+            .listSectionSpacing(.compact)
+            
             .onAppear {
                 Task { await EditingExpensesTip.listViewOpenedEvent.donate() }
                 
@@ -62,7 +111,7 @@ struct ExpensesListView: View {
             .contextMenu {
                 if !expenses.isEmpty {
                     Button("Sort expenses", systemImage: "list.bullet.circle") {
-                        //TODO: - filter or sort action
+                        //TODO: - filter action
                     }
                 } else {
                     /// no action needded
