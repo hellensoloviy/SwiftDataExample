@@ -19,7 +19,7 @@ struct AddExpenseSheet: View {
     @State private var name: String = ""
     @State private var date: Date = Date()
     @State private var value: Double = 0
-
+    
     var body: some View {
         NavigationStack{
             Form {

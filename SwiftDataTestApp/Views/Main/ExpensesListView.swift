@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  ExpensesListView.swift
 //  SwiftDataTestApp
 //
 //  Created by Hellen Soloviy on 21.01.2026.
@@ -9,25 +9,27 @@ import SwiftUI
 import SwiftData
 
 #Preview {
-    ContentView()
+    ExpensesListView(viewModel: .init())
 }
 
-struct ContentView: View {
+struct ExpensesListView: View {
     
     @Environment(\.modelContext) private var modelContext
 
     @State private var isShowingItemSheet: Bool = false
     @State private var expenseToEdit: Expense?
     
+    @StateObject var viewModel: ViewModel
+    
     /// fetch using Query automatically
     @Query(sort: \Expense.date) var expenses: [Expense]
-    
     
     /// Example of Predicate to filter the expense, not just sort.
     @Query(filter: #Predicate<Expense> { $0.value > 1000 } , sort: \Expense.date)
     var filteredExpenses: [Expense]
     
-    
+    private let addExpenseTip = AddExpenseTip()
+
     var body: some View {
         NavigationStack{
             List{
@@ -47,7 +49,17 @@ struct ContentView: View {
             }
             .navigationTitle("Expenses")
             .navigationBarTitleDisplayMode(.large)
+            .contextMenu {
+                if !expenses.isEmpty {
+                    Button("Sort expenses", systemImage: "list.bullet.circle") {
+                        //TODO: - filter action
+                    }
+                } else {
+                    /// no action needded
+                }
+            }
             .sheet(isPresented: $isShowingItemSheet) {
+                addExpenseTip.invalidate(reason: .actionPerformed)
                 AddExpenseSheet()
             }
             .sheet(item: $expenseToEdit, content: { obj in
@@ -56,9 +68,18 @@ struct ContentView: View {
             })
             .toolbar {
                 if !expenses.isEmpty {
-                    Button("Add expense", systemImage: "plus") {
+                    
+                    /// Be aware that **Button("name", systemImage:"")** will not show any popoverTip. So its changed to another initializer.
+                    /// Its known issue in TipKit
+                    /// But with this initializer we have less from the box and need to add *accessibilityLabel* ourselves
+                    Button {
                         isShowingItemSheet = true
+                    } label: {
+                        Image(systemName: "plus")
                     }
+                    .accessibilityLabel("Add new expense")
+                    .popoverTip(addExpenseTip)
+                    
                 }
             }
             .overlay {

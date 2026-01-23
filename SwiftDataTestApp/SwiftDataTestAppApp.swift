@@ -7,7 +7,7 @@
 
 import SwiftUI
 import SwiftData
-
+import TipKit
 
 @main
 struct SwiftDataTestAppApp: App {
@@ -20,8 +20,15 @@ struct SwiftDataTestAppApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ExpensesListView(viewModel: .init())
                 .modelContainer(container)
+                .task {
+                    try? Tips.configure([
+//                        .displayFrequency(.immediate), /// just to test
+                        .datastoreLocation(.applicationDefault)
+                    ])
+                }
+                
         }
     }
 }
