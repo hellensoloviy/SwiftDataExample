@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import TipKit
 
 #Preview {
     ExpensesListView(viewModel: .init())
@@ -29,14 +30,19 @@ struct ExpensesListView: View {
     var filteredExpenses: [Expense]
     
     private let addExpenseTip = AddExpenseTip()
+    private let editingTip = EditingExpensesTip()
+
 
     var body: some View {
         NavigationStack{
             List{
+                TipView(editingTip)
+                    .tipBackground(.teal.opacity(0.2))
                 ForEach(expenses) { obj in
                     ExpenseCell(expense: obj)
                         .onTapGesture {
                             expenseToEdit = obj
+                            Task { await EditingExpensesTip.editExpenseEvent.donate() }
                         }
                 }
                 
@@ -47,19 +53,22 @@ struct ExpensesListView: View {
                     }
                 }
             }
+            .onAppear {
+                Task { await EditingExpensesTip.listViewOpenedEvent.donate() }
+                
+            }
             .navigationTitle("Expenses")
             .navigationBarTitleDisplayMode(.large)
             .contextMenu {
                 if !expenses.isEmpty {
                     Button("Sort expenses", systemImage: "list.bullet.circle") {
-                        //TODO: - filter action
+                        //TODO: - filter or sort action
                     }
                 } else {
                     /// no action needded
                 }
             }
             .sheet(isPresented: $isShowingItemSheet) {
-                addExpenseTip.invalidate(reason: .actionPerformed)
                 AddExpenseSheet()
             }
             .sheet(item: $expenseToEdit, content: { obj in
@@ -73,12 +82,14 @@ struct ExpensesListView: View {
                     /// Its known issue in TipKit
                     /// But with this initializer we have less from the box and need to add *accessibilityLabel* ourselves
                     Button {
+                        addExpenseTip.invalidate(reason: .actionPerformed)
                         isShowingItemSheet = true
                     } label: {
                         Image(systemName: "plus")
                     }
                     .accessibilityLabel("Add new expense")
                     .popoverTip(addExpenseTip)
+
                     
                 }
             }

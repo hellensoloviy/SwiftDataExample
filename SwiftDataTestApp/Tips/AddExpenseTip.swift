@@ -12,6 +12,7 @@ struct AddExpenseTip: Tip {
     
     var title: Text {
         Text("Add new expense")
+            .foregroundStyle(.teal)
     }
     
     var message: Text? {
